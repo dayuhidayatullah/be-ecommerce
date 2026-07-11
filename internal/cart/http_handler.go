@@ -43,7 +43,7 @@ func (h *HttpHandler) AddToCart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.useCase.AddToCart(userID, req); err != nil {
-		utils.RespondError(w, http.StatusInternalServerError, "Failed to add item to cart", err.Error())
+		utils.HandleError(w, err)
 		return
 	}
 
@@ -60,7 +60,7 @@ func (h *HttpHandler) GetMyCart(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := h.useCase.GetMyCart(userID)
 	if err != nil {
-		utils.RespondError(w, http.StatusInternalServerError, "Failed to retrieve cart", err.Error())
+		utils.HandleError(w, err)
 		return
 	}
 

@@ -3,6 +3,7 @@ package auth
 import (
 	"errors"
 
+	"be-ecommerce/internal/customerror"
 	"be-ecommerce/internal/models"
 	"be-ecommerce/internal/utils"
 
@@ -25,15 +26,15 @@ func (u *authUseCase) Register(req RegisterRequest) (RegisterResponse, error) {
 	// Check if email already exists
 	_, err := u.repo.GetUserByEmail(req.Email)
 	if err == nil {
-		return RegisterResponse{}, errors.New("email_conflict") // Email exists
+		return RegisterResponse{}, customerror.NewConflictError("email already registered")
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-		return RegisterResponse{}, err // Database error
+		return RegisterResponse{}, customerror.NewInternalError("database error", err)
 	}
 
 	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return RegisterResponse{}, err
+		return RegisterResponse{}, customerror.NewInternalError("failed to hash password", err)
 	}
 
 	// Create user model
@@ -46,7 +47,7 @@ func (u *authUseCase) Register(req RegisterRequest) (RegisterResponse, error) {
 
 	// Save to DB via repository
 	if err := u.repo.CreateUser(&user); err != nil {
-		return RegisterResponse{}, err
+		return RegisterResponse{}, customerror.NewInternalError("failed to create user", err)
 	}
 
 	// Prepare response
@@ -63,20 +64,20 @@ func (u *authUseCase) Login(req LoginRequest) (LoginResponse, error) {
 	user, err := u.repo.GetUserByEmail(req.Email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return LoginResponse{}, errors.New("invalid_credentials")
+			return LoginResponse{}, customerror.NewUnauthorizedError("invalid email or password")
 		}
-		return LoginResponse{}, err
+		return LoginResponse{}, customerror.NewInternalError("database error", err)
 	}
 
 	// Compare passwords
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
-		return LoginResponse{}, errors.New("invalid_credentials")
+		return LoginResponse{}, customerror.NewUnauthorizedError("invalid email or password")
 	}
 
 	// Generate JWT Token
 	token, err := utils.GenerateJWT(user.ID.String(), user.Role)
 	if err != nil {
-		return LoginResponse{}, err
+		return LoginResponse{}, customerror.NewInternalError("failed to generate token", err)
 	}
 
 	// Prepare response

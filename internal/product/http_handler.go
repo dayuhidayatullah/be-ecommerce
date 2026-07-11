@@ -37,7 +37,7 @@ func (h *HttpHandler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := h.useCase.CreateCategory(req)
 	if err != nil {
-		utils.RespondError(w, http.StatusInternalServerError, "Failed to create category", err.Error())
+		utils.HandleError(w, err)
 		return
 	}
 
@@ -47,7 +47,7 @@ func (h *HttpHandler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 func (h *HttpHandler) GetCategories(w http.ResponseWriter, r *http.Request) {
 	resp, err := h.useCase.GetCategories()
 	if err != nil {
-		utils.RespondError(w, http.StatusInternalServerError, "Failed to retrieve categories", err.Error())
+		utils.HandleError(w, err)
 		return
 	}
 
@@ -69,11 +69,7 @@ func (h *HttpHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := h.useCase.CreateProduct(req)
 	if err != nil {
-		if err.Error() == "category not found" {
-			utils.RespondError(w, http.StatusNotFound, "Category not found", "not_found")
-			return
-		}
-		utils.RespondError(w, http.StatusInternalServerError, "Failed to create product", err.Error())
+		utils.HandleError(w, err)
 		return
 	}
 

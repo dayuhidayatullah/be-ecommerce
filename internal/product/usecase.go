@@ -1,8 +1,7 @@
 package product
 
 import (
-	"errors"
-
+	"be-ecommerce/internal/customerror"
 	"be-ecommerce/internal/models"
 
 	"github.com/google/uuid"
@@ -25,7 +24,7 @@ func (u *productUseCase) CreateCategory(req CreateCategoryRequest) (CategoryResp
 	}
 
 	if err := u.repo.CreateCategory(&category); err != nil {
-		return CategoryResponse{}, err
+		return CategoryResponse{}, customerror.NewInternalError("failed to create category", err)
 	}
 
 	return CategoryResponse{
@@ -38,7 +37,7 @@ func (u *productUseCase) CreateCategory(req CreateCategoryRequest) (CategoryResp
 func (u *productUseCase) GetCategories() ([]CategoryResponse, error) {
 	categories, err := u.repo.GetCategories()
 	if err != nil {
-		return nil, err
+		return nil, customerror.NewInternalError("failed to get categories", err)
 	}
 
 	var responses []CategoryResponse
@@ -56,16 +55,16 @@ func (u *productUseCase) CreateProduct(req CreateProductRequest) (ProductRespons
 	// Parse CategoryID to UUID
 	categoryID, err := uuid.Parse(req.CategoryID)
 	if err != nil {
-		return ProductResponse{}, errors.New("invalid category id format")
+		return ProductResponse{}, customerror.NewBadRequestError("invalid category id format")
 	}
 
 	// Verify category exists
 	category, err := u.repo.GetCategoryByID(categoryID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return ProductResponse{}, errors.New("category not found")
+		if err == gorm.ErrRecordNotFound {
+			return ProductResponse{}, customerror.NewNotFoundError("category not found")
 		}
-		return ProductResponse{}, err
+		return ProductResponse{}, customerror.NewInternalError("database error", err)
 	}
 
 	product := models.Product{

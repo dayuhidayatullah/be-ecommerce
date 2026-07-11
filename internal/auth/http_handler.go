@@ -27,30 +27,22 @@ func NewHttpHandler(useCase AuthUseCase, validate *validator.Validate) *HttpHand
 func (h *HttpHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req RegisterRequest
 
-	// 1. Decode JSON request
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.RespondError(w, http.StatusBadRequest, "Invalid request payload", err.Error())
 		return
 	}
 
-	// 2. Validate input
 	if err := h.validate.Struct(req); err != nil {
 		utils.RespondError(w, http.StatusBadRequest, "Validation failed", err.Error())
 		return
 	}
 
-	// 3. Process via UseCase
 	resp, err := h.useCase.Register(req)
 	if err != nil {
-		if err.Error() == "email_conflict" {
-			utils.RespondError(w, http.StatusConflict, "Email already registered", "email_conflict")
-			return
-		}
-		utils.RespondError(w, http.StatusInternalServerError, "Registration failed", err.Error())
+		utils.HandleError(w, err)
 		return
 	}
 
-	// 4. Return response
 	utils.RespondSuccess(w, http.StatusCreated, "User registered successfully", resp)
 }
 
@@ -58,29 +50,21 @@ func (h *HttpHandler) Register(w http.ResponseWriter, r *http.Request) {
 func (h *HttpHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
 
-	// 1. Decode JSON request
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.RespondError(w, http.StatusBadRequest, "Invalid request payload", err.Error())
 		return
 	}
 
-	// 2. Validate input
 	if err := h.validate.Struct(req); err != nil {
 		utils.RespondError(w, http.StatusBadRequest, "Validation failed", err.Error())
 		return
 	}
 
-	// 3. Process via UseCase
 	resp, err := h.useCase.Login(req)
 	if err != nil {
-		if err.Error() == "invalid_credentials" {
-			utils.RespondError(w, http.StatusUnauthorized, "Invalid email or password", "invalid_credentials")
-			return
-		}
-		utils.RespondError(w, http.StatusInternalServerError, "Login failed", err.Error())
+		utils.HandleError(w, err)
 		return
 	}
 
-	// 4. Return response
 	utils.RespondSuccess(w, http.StatusOK, "Login successful", resp)
 }

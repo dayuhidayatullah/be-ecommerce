@@ -44,11 +44,7 @@ func (h *HttpHandler) Checkout(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := h.useCase.Checkout(userID, req)
 	if err != nil {
-		if err.Error() == "cart is empty" {
-			utils.RespondError(w, http.StatusBadRequest, "Cannot checkout an empty cart", "empty_cart")
-			return
-		}
-		utils.RespondError(w, http.StatusInternalServerError, "Checkout failed", err.Error())
+		utils.HandleError(w, err)
 		return
 	}
 
@@ -65,7 +61,7 @@ func (h *HttpHandler) GetMyOrders(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := h.useCase.GetMyOrders(userID)
 	if err != nil {
-		utils.RespondError(w, http.StatusInternalServerError, "Failed to retrieve orders", err.Error())
+		utils.HandleError(w, err)
 		return
 	}
 
