@@ -7,6 +7,7 @@ import (
 	"be-ecommerce/internal/auth"
 	"be-ecommerce/internal/cart"
 	"be-ecommerce/internal/middleware"
+	"be-ecommerce/internal/order"
 	"be-ecommerce/internal/product"
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
@@ -52,6 +53,11 @@ func (app *application) mount() http.Handler {
       cartRepo := cart.NewCartRepository(app.db)
       cartUseCase := cart.NewCartUseCase(cartRepo)
       cartHandler := cart.NewHttpHandler(cartUseCase, app.validate)
+      
+      // Order module
+      orderRepo := order.NewOrderRepository(app.db)
+      orderUseCase := order.NewOrderUseCase(orderRepo)
+      orderHandler := order.NewHttpHandler(orderUseCase, app.validate)
 
       // --- Public Routes ---
       r.Post("/register", authHandler.Register)
@@ -67,6 +73,10 @@ func (app *application) mount() http.Handler {
           // Cart routes (User)
           r.Get("/cart", cartHandler.GetMyCart)
           r.Post("/cart/items", cartHandler.AddToCart)
+          
+          // Order routes (User)
+          r.Get("/orders", orderHandler.GetMyOrders)
+          r.Post("/orders/checkout", orderHandler.Checkout)
 
           // --- Admin Only Routes ---
           r.Group(func(r chi.Router) {
