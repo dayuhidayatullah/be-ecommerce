@@ -1,8 +1,8 @@
 package cart
 
 import (
+	"be-ecommerce/internal/customerror"
 	"be-ecommerce/internal/models"
-	"errors"
 
 	"github.com/google/uuid"
 )
@@ -19,28 +19,31 @@ func NewCartUseCase(repo CartRepository) CartUseCase {
 func (u *cartUseCase) AddToCart(userID string, req AddToCartRequest) error {
 	uid, err := uuid.Parse(userID)
 	if err != nil {
-		return errors.New("invalid user id")
+		return customerror.NewBadRequestError("invalid user id")
 	}
 	productID, err := uuid.Parse(req.ProductID)
 	if err != nil {
-		return errors.New("invalid product id")
+		return customerror.NewBadRequestError("invalid product id")
 	}
 
 	// 1. Get or create cart for user
 	cart, err := u.repo.GetOrCreateCart(uid)
 	if err != nil {
-		return err
+		return customerror.NewInternalError("failed to get or create cart", err)
 	}
 
 	// 2. Check if product already exists in cart
 	existingItem, err := u.repo.GetCartItem(cart.ID, productID)
 	if err != nil {
-		return err
+		return customerror.NewInternalError("failed to get cart item", err)
 	}
 
 	// 3. If exists, update quantity
 	if existingItem != nil {
-		return u.repo.UpdateCartItemQuantity(existingItem.ID, req.Quantity)
+		if err := u.repo.UpdateCartItemQuantity(existingItem.ID, req.Quantity); err != nil {
+			return customerror.NewInternalError("failed to update cart item quantity", err)
+		}
+		return nil
 	}
 
 	// 4. If not exists, create new cart item
@@ -50,14 +53,9 @@ func (u *cartUseCase) AddToCart(userID string, req AddToCartRequest) error {
 		Quantity:  req.Quantity,
 	}
 	
-	// Assuming foreign key constraints in DB will ensure product exists,
-	// otherwise we could inject ProductRepository here to check first.
-	// For simplicity, we rely on DB constraint.
 	err = u.repo.CreateCartItem(newItem)
 	if err != nil {
-		// If error is foreign key violation, it means product doesn't exist
-		// GORM specific check could be added, but returning generic error for now
-		return errors.New("failed to add item, ensure product exists")
+		return customerror.NewNotFoundError("failed to add item, ensure product exists")
 	}
 
 	return nil
@@ -66,12 +64,12 @@ func (u *cartUseCase) AddToCart(userID string, req AddToCartRequest) error {
 func (u *cartUseCase) GetMyCart(userID string) (CartResponse, error) {
 	uid, err := uuid.Parse(userID)
 	if err != nil {
-		return CartResponse{}, errors.New("invalid user id")
+		return CartResponse{}, customerror.NewBadRequestError("invalid user id")
 	}
 
 	cart, items, err := u.repo.GetCartWithItems(uid)
 	if err != nil {
-		return CartResponse{}, err
+		return CartResponse{}, customerror.NewInternalError("failed to get cart with items", err)
 	}
 
 	// Handle case where user hasn't added anything yet

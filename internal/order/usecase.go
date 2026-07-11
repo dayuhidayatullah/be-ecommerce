@@ -1,7 +1,7 @@
 package order
 
 import (
-	"errors"
+	"be-ecommerce/internal/customerror"
 
 	"github.com/google/uuid"
 )
@@ -18,13 +18,18 @@ func NewOrderUseCase(repo OrderRepository) OrderUseCase {
 func (u *orderUseCase) Checkout(userID string, req CheckoutRequest) (OrderResponse, error) {
 	uid, err := uuid.Parse(userID)
 	if err != nil {
-		return OrderResponse{}, errors.New("invalid user id")
+		return OrderResponse{}, customerror.NewBadRequestError("invalid user id")
 	}
 
 	// Call repository to handle transaction
 	order, err := u.repo.Checkout(uid, req.ShippingAddress)
 	if err != nil {
-		return OrderResponse{}, err
+		if err.Error() == "cart is empty" {
+			return OrderResponse{}, customerror.NewBadRequestError("cannot checkout an empty cart")
+		}
+		// In a real app we might inspect the error string to return Conflict or Bad Request if insufficient stock
+		// But for now we treat other business rule violations as BadRequest if it's stock, or Internal
+		return OrderResponse{}, customerror.NewInternalError("checkout transaction failed", err)
 	}
 
 	return OrderResponse{
@@ -41,12 +46,12 @@ func (u *orderUseCase) Checkout(userID string, req CheckoutRequest) (OrderRespon
 func (u *orderUseCase) GetMyOrders(userID string) ([]OrderResponse, error) {
 	uid, err := uuid.Parse(userID)
 	if err != nil {
-		return nil, errors.New("invalid user id")
+		return nil, customerror.NewBadRequestError("invalid user id")
 	}
 
 	orders, err := u.repo.GetMyOrders(uid)
 	if err != nil {
-		return nil, err
+		return nil, customerror.NewInternalError("failed to get orders", err)
 	}
 
 	var responses []OrderResponse
