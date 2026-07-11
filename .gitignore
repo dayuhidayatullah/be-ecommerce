@@ -1,0 +1,16 @@
+# Environment variables
+.env
+
+# Go binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Vendor
+vendor/
+
+# OS specific files
+.DS_Store
+Thumbs.db
