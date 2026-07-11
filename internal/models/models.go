@@ -62,6 +62,7 @@ type Order struct {
 	TotalAmount     float64   `gorm:"type:decimal(10,2);not null"`
 	Status          string    `gorm:"type:varchar(50);default:'pending'"`
 	ShippingAddress string    `gorm:"type:text;not null"`
+	OrderItems      []OrderItem `gorm:"foreignKey:OrderID"`
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 }
