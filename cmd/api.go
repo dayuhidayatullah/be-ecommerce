@@ -2,6 +2,8 @@ package main
 
 import (
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"be-ecommerce/internal/auth"
@@ -9,8 +11,10 @@ import (
 	"be-ecommerce/internal/middleware"
 	"be-ecommerce/internal/order"
 	"be-ecommerce/internal/product"
+	"be-ecommerce/internal/upload"
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
 )
@@ -22,6 +26,17 @@ type application struct {
 }
 func (app *application) mount() http.Handler {
 	r := chi.NewRouter()
+
+	// Basic CORS
+	// for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:*", "https://localhost:*", "http://127.0.0.1:*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	}))
 
   // A good base middleware stack
   r.Use(chimiddleware.RequestID)
@@ -35,6 +50,12 @@ func (app *application) mount() http.Handler {
   r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
     w.Write([]byte("hi"))
   })
+
+	// --- Static File Server for Uploads ---
+	// Serve files from the /uploads/ folder
+	workDir, _ := os.Getwd()
+	filesDir := http.Dir(filepath.Join(workDir, "uploads"))
+	r.Handle("/uploads/*", http.StripPrefix("/uploads/", http.FileServer(filesDir)))
 
   r.Route("/api/v1", func(r chi.Router) {
       // --- Dependency Injection ---
@@ -69,6 +90,9 @@ func (app *application) mount() http.Handler {
       // --- Protected Routes (Require Login) ---
       r.Group(func(r chi.Router) {
           r.Use(middleware.RequireAuth)
+          
+          // Image Upload
+          r.Post("/upload", upload.UploadImage)
           
           // Cart routes (User)
           r.Get("/cart", cartHandler.GetMyCart)

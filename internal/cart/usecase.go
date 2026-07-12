@@ -94,6 +94,7 @@ func (u *cartUseCase) GetMyCart(userID string) (CartResponse, error) {
 			Price:     item.Product.Price,
 			Quantity:  item.Quantity,
 			Subtotal:  subtotal,
+			ImageURL:  item.Product.ImageURL,
 		})
 	}
 

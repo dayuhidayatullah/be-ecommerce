@@ -68,19 +68,20 @@ func (u *productUseCase) CreateProduct(req CreateProductRequest) (ProductRespons
 	}
 
 	product := models.Product{
-		CategoryID:  categoryID,
+		CategoryID:  category.ID,
 		Name:        req.Name,
 		Description: req.Description,
 		Price:       req.Price,
 		Stock:       req.Stock,
+		ImageURL:    req.ImageURL,
 	}
 
 	if err := u.repo.CreateProduct(&product); err != nil {
-		return ProductResponse{}, err
+		return ProductResponse{}, customerror.NewInternalError("failed to create product", err)
 	}
 
 	return ProductResponse{
-		ID:          product.ID.String(),
+		ID: product.ID.String(),
 		Category: CategoryResponse{
 			ID:          category.ID.String(),
 			Name:        category.Name,
@@ -90,13 +91,14 @@ func (u *productUseCase) CreateProduct(req CreateProductRequest) (ProductRespons
 		Description: product.Description,
 		Price:       product.Price,
 		Stock:       product.Stock,
+		ImageURL:    product.ImageURL,
 	}, nil
 }
 
 func (u *productUseCase) GetProducts() ([]ProductResponse, error) {
 	products, err := u.repo.GetProducts()
 	if err != nil {
-		return nil, err
+		return nil, customerror.NewInternalError("failed to get products", err)
 	}
 
 	var responses []ProductResponse
@@ -112,6 +114,7 @@ func (u *productUseCase) GetProducts() ([]ProductResponse, error) {
 			Description: p.Description,
 			Price:       p.Price,
 			Stock:       p.Stock,
+			ImageURL:    p.ImageURL,
 		})
 	}
 	return responses, nil

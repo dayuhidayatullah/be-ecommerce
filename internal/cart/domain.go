@@ -18,6 +18,7 @@ type CartItemResponse struct {
 	Price     float64 `json:"price"`
 	Quantity  int     `json:"quantity"`
 	Subtotal  float64 `json:"subtotal"`
+	ImageURL  string  `json:"image_url"`
 }
 
 type CartResponse struct {

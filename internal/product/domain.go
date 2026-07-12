@@ -23,6 +23,7 @@ type CreateProductRequest struct {
 	Description string  `json:"description"`
 	Price       float64 `json:"price" validate:"required,gt=0"`
 	Stock       int     `json:"stock" validate:"gte=0"`
+	ImageURL    string  `json:"image_url"`
 }
 
 type ProductResponse struct {
@@ -32,6 +33,7 @@ type ProductResponse struct {
 	Description string           `json:"description"`
 	Price       float64          `json:"price"`
 	Stock       int              `json:"stock"`
+	ImageURL    string           `json:"image_url"`
 }
 
 // Interfaces
