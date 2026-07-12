@@ -2,6 +2,8 @@ package main
 
 import (
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"be-ecommerce/internal/auth"
@@ -9,6 +11,7 @@ import (
 	"be-ecommerce/internal/middleware"
 	"be-ecommerce/internal/order"
 	"be-ecommerce/internal/product"
+	"be-ecommerce/internal/upload"
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -48,6 +51,12 @@ func (app *application) mount() http.Handler {
     w.Write([]byte("hi"))
   })
 
+	// --- Static File Server for Uploads ---
+	// Serve files from the /uploads/ folder
+	workDir, _ := os.Getwd()
+	filesDir := http.Dir(filepath.Join(workDir, "uploads"))
+	r.Handle("/uploads/*", http.StripPrefix("/uploads/", http.FileServer(filesDir)))
+
   r.Route("/api/v1", func(r chi.Router) {
       // --- Dependency Injection ---
       
@@ -81,6 +90,9 @@ func (app *application) mount() http.Handler {
       // --- Protected Routes (Require Login) ---
       r.Group(func(r chi.Router) {
           r.Use(middleware.RequireAuth)
+          
+          // Image Upload
+          r.Post("/upload", upload.UploadImage)
           
           // Cart routes (User)
           r.Get("/cart", cartHandler.GetMyCart)
