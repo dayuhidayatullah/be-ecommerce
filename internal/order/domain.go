@@ -18,6 +18,7 @@ type OrderItemResponse struct {
 	Quantity  int     `json:"quantity"`
 	Price     float64 `json:"price"`
 	Subtotal  float64 `json:"subtotal"`
+	ImageURL  string  `json:"image_url"`
 }
 
 type OrderResponse struct {

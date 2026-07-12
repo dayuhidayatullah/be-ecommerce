@@ -65,6 +65,7 @@ func (u *orderUseCase) GetMyOrders(userID string) ([]OrderResponse, error) {
 				Quantity:  item.Quantity,
 				Price:     item.Price,
 				Subtotal:  item.Price * float64(item.Quantity),
+				ImageURL:  item.Product.ImageURL,
 			})
 		}
 		

@@ -67,6 +67,7 @@ func TestCreateProduct(t *testing.T) {
 				Description: "Gaming Laptop",
 				Price:       1500,
 				Stock:       10,
+				ImageURL:    "http://example.com/laptop.png",
 			},
 			mockSetup: func(repo *MockProductRepository) {
 				repo.On("GetCategoryByID", categoryID).Return(&models.Category{ID: categoryID, Name: "Electronics"}, nil)
